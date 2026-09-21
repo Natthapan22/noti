@@ -75,8 +75,8 @@ struct ContentView: View {
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
         {
-            // Left spacer (matches music art slot) + room for diamond + "Diamante"
-            chinWidth += max(0, vm.effectiveClosedNotchHeight - 12) + 78
+            // Left empty wing + right diamond wing (symmetric)
+            chinWidth += 2 * max(18, vm.effectiveClosedNotchHeight - 10) + 8
         }
 
         return chinWidth
@@ -394,24 +394,26 @@ struct ContentView: View {
 
     @ViewBuilder
     func BoringFaceAnimation() -> some View {
-        HStack {
-            HStack(spacing: 0) {
-                Rectangle()
-                    .fill(.clear)
-                    .frame(
-                        width: max(0, vm.effectiveClosedNotchHeight - 12),
-                        height: max(0, vm.effectiveClosedNotchHeight - 12)
-                    )
-                Rectangle()
-                    .fill(.black)
-                    .frame(width: max(0, vm.closedNotchSize.width - 20))
-                DiamanteBrandMark(height: max(14, vm.effectiveClosedNotchHeight - 10))
-                    .padding(.trailing, 2)
-            }
-        }.frame(
-            height: vm.effectiveClosedNotchHeight,
-            alignment: .center
-        )
+        let side: CGFloat = max(18, vm.effectiveClosedNotchHeight - 10)
+        return HStack(spacing: 0) {
+            // Left wing — empty, balances the diamond on the right
+            Color.clear
+                .frame(width: side, height: side)
+
+            // Hardware-notch span — Diamante centered here
+            Rectangle()
+                .fill(.black)
+                .frame(width: max(0, vm.closedNotchSize.width - 4))
+                .overlay {
+                    DiamanteNameMark(height: max(14, side - 2), compact: true)
+                }
+
+            // Far-right diamond
+            DiamanteDiamondMark(height: max(14, side - 2), compact: true)
+                .frame(width: side, height: side, alignment: .trailing)
+                .padding(.trailing, 2)
+        }
+        .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
     }
 
     @ViewBuilder
