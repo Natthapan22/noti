@@ -72,6 +72,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
+    /// Finder re-open while already running — pin the selected screen only.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        Task { @MainActor in
+            self.closeNotchTask?.cancel()
+            self.closeNotchTask = nil
+            let target: BoringViewModel
+            if Defaults[.showOnAllDisplays],
+               let selected = self.viewModels[self.coordinator.selectedScreenUUID] {
+                target = selected
+            } else {
+                target = self.vm
+            }
+            target.openPinned()
+        }
+        return true
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         NotificationCenter.default.removeObserver(self)
         if let observer = screenLockedObserver {
@@ -248,7 +265,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             rootView: ContentView()
                 .environmentObject(viewModel)
         )
-
         window.orderFrontRegardless()
         NotchSpaceManager.shared.notchSpace.windows.insert(window)
 
@@ -271,11 +287,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let screenFrame = screen.frame
-        window.setFrameOrigin(
-            NSPoint(
-                x: screenFrame.origin.x + (screenFrame.width / 2) - window.frame.width / 2,
-                y: screenFrame.origin.y + screenFrame.height - window.frame.height
-            ))
+        // Always use the designed panel size and pin flush to the top edge.
+        // Using the live window.frame.height can leave a gap if AppKit resized it.
+        let size = windowSize
+        let origin = NSPoint(
+            x: screenFrame.origin.x + (screenFrame.width / 2) - size.width / 2,
+            y: screenFrame.origin.y + screenFrame.height - size.height
+        )
+        window.setFrame(NSRect(origin: origin, size: size), display: true)
         window.alphaValue = 1
     }
 

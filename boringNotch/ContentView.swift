@@ -133,7 +133,12 @@ struct ContentView: View {
                         handleHover(hovering)
                     }
                     .onTapGesture {
-                        doOpen()
+                        // Click opens and pins so the panel stays usable.
+                        // Closing is via swipe-up or mouse-leave (with grace) — not a
+                        // full-panel tap, which fights AI Island buttons.
+                        if vm.notchState == .closed {
+                            vm.openPinned()
+                        }
                     }
                     .conditionalModifier(Defaults[.enableGestures]) { view in
                         view
@@ -239,6 +244,12 @@ struct ContentView: View {
                 if !SharingStateManager.shared.preventNotchClose {
                     vm.close()
                 }
+            }
+        }
+        .onChange(of: coordinator.currentView) { _, newView in
+            vm.applyOpenSizeForCurrentView()
+            if newView != .aiIsland {
+                AgentManager.shared.selectSession(nil)
             }
         }
     }
@@ -557,14 +568,18 @@ struct ContentView: View {
             }
         } else {
             hoverTask = Task {
-                try? await Task.sleep(for: .milliseconds(100))
+                // Pinned open gets a longer grace so the user can move onto buttons
+                // without an instant close — but it must still dismiss, or the notch
+                // stays glued over the desktop (see ui-issues C2/C4).
+                let delay: Duration = vm.keepOpen ? .milliseconds(1200) : .milliseconds(280)
+                try? await Task.sleep(for: delay)
                 guard !Task.isCancelled else { return }
-                
+
                 await MainActor.run {
                     withAnimation(animationSpring) {
                         self.isHovering = false
                     }
-                    
+
                     if self.vm.notchState == .open && !self.vm.isBatteryPopoverActive && !SharingStateManager.shared.preventNotchClose {
                         self.vm.close()
                     }

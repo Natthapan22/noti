@@ -18,6 +18,8 @@ class BoringViewModel: NSObject, ObservableObject {
 
     @Published var contentType: ContentType = .normal
     @Published private(set) var notchState: NotchState = .closed
+    /// When true, hover-leave must not auto-close (click / forced open).
+    @Published var keepOpen: Bool = false
 
     @Published var dragDetectorTargeting: Bool = false
     @Published var generalDropTargeting: Bool = false
@@ -190,11 +192,37 @@ class BoringViewModel: NSObject, ObservableObject {
     }
 
     func open() {
-        self.notchSize = openNotchSize
+        keepOpen = false
+        self.notchSize = openNotchSize(for: coordinator.currentView)
         self.notchState = .open
         
         // Force music information update when notch is opened
         MusicManager.shared.forceUpdate()
+    }
+
+    func openPinned() {
+        open()
+        keepOpen = true
+        // Dock / click reopen must not stick forever if the pointer never enters.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            guard keepOpen, notchState == .open else { return }
+            guard !isMouseHovering() else { return }
+            withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)) {
+                close()
+            }
+        }
+    }
+
+    /// Keep open height in sync when switching tabs. Width stays the same, so the
+    /// panel itself does not need to move.
+    func applyOpenSizeForCurrentView() {
+        guard notchState == .open else { return }
+        let next = openNotchSize(for: coordinator.currentView)
+        guard next != notchSize else { return }
+        withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)) {
+            notchSize = next
+        }
     }
 
     func close() {
@@ -202,6 +230,7 @@ class BoringViewModel: NSObject, ObservableObject {
         if SharingStateManager.shared.preventNotchClose {
             return
         }
+        keepOpen = false
         self.notchSize = getClosedNotchSize(screenUUID: self.screenUUID)
         self.closedNotchSize = self.notchSize
         self.notchState = .closed

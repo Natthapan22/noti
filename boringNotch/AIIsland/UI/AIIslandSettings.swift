@@ -20,6 +20,7 @@ struct AIIslandSettings: View {
                 Defaults.Toggle("Enable AI Island", key: .aiIslandEnabled)
                 Defaults.Toggle("Show collapsed attention chip", key: .aiIslandShowCollapsedChip)
                 Defaults.Toggle("Attention sneak peeks", key: .aiIslandNotifications)
+                Defaults.Toggle("Hide Ready/idle agents", key: .aiIslandHideIdleAgents)
             } header: {
                 Text("AI Island")
             } footer: {

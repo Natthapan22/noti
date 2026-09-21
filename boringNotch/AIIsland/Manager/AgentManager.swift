@@ -66,6 +66,9 @@ final class AgentManager: ObservableObject {
         if projectFilter != "All" {
             list = list.filter { $0.workspace.projectName == projectFilter }
         }
+        if Defaults[.aiIslandHideIdleAgents] {
+            list = list.filter { $0.status != .idle && $0.status != .disconnected }
+        }
         return AgentAttention.sortedForDisplay(list)
     }
 
@@ -90,6 +93,9 @@ final class AgentManager: ObservableObject {
     }
 
     func refreshAll() async {
+        await Task.detached(priority: .utility) {
+            ProcessDetection.refreshCommandLineCache()
+        }.value
         for adapter in adapters.values {
             await adapter.refresh()
         }

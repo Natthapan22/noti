@@ -95,7 +95,7 @@ enum AgentStatus: String, CaseIterable, Codable, Hashable {
 
     var label: String {
         switch self {
-        case .idle: return "Idle"
+        case .idle: return "Ready"
         case .starting: return "Starting"
         case .working: return "Working"
         case .waiting: return "Waiting"
@@ -107,6 +107,27 @@ enum AgentStatus: String, CaseIterable, Codable, Hashable {
         case .disconnected: return "Offline"
         }
     }
+
+    /// UI signal color: green = working, orange = needs approval, red = problem.
+    var signalColorName: AgentSignalColor {
+        switch self {
+        case .working, .starting:
+            return .green
+        case .permissionRequired, .question, .planReview, .waiting:
+            return .orange
+        case .failed, .disconnected:
+            return .red
+        case .completed, .idle:
+            return .neutral
+        }
+    }
+}
+
+enum AgentSignalColor: Equatable {
+    case green
+    case orange
+    case red
+    case neutral
 }
 
 // MARK: - Capabilities

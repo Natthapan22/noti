@@ -166,6 +166,7 @@ extension Defaults.Keys {
     static let aiIslandEnabled = Key<Bool>("aiIslandEnabled", default: true)
     static let aiIslandDemoMode = Key<Bool>("aiIslandDemoMode", default: false)
     static let aiIslandNotifications = Key<Bool>("aiIslandNotifications", default: true)
+    static let aiIslandHideIdleAgents = Key<Bool>("aiIslandHideIdleAgents", default: false)
     static let aiIslandEnabledAgents = Key<[String]>(
         "aiIslandEnabledAgents",
         default: [
@@ -176,8 +177,8 @@ extension Defaults.Keys {
             AgentKind.openCode.rawValue,
             AgentKind.qwen.rawValue,
             AgentKind.kimi.rawValue,
-            AgentKind.copilotCLI.rawValue,
-            AgentKind.remote.rawValue
+            AgentKind.copilotCLI.rawValue
+            // remote omitted from default — noisy when ssh exists
         ]
     )
     static let aiIslandShowCollapsedChip = Key<Bool>("aiIslandShowCollapsedChip", default: true)

@@ -1,8 +1,8 @@
 //
-//  CursorAdapter.swift
+//  ConcreteAdapters.swift
 //  boringNotch
 //
-//  Detects Cursor via running app / support folder. Does not invent agent RPC.
+//  Detects agents via running app / CLI / terminal command lines.
 //
 
 import Foundation
@@ -14,53 +14,57 @@ final class CursorAdapter: DetectingAgentAdapter {
         super.init(
             kind: .cursor,
             bundleIDs: KnownAgentApps.cursorBundleIDs,
-            cliNames: ["cursor"],
+            appNames: KnownAgentApps.cursorAppNames,
+            cliNames: ["cursor", "agent"],
+            commandLineNeedles: KnownAgentApps.cursorCommandNeedles,
             supportPaths: [support],
             appDisplayName: "Cursor"
         )
     }
 
-    override func buildSessions(running: Bool, cliPresent: Bool) -> [AgentSession] {
+    override func buildSessions(appRunning: Bool, cliProcessRunning: Bool, cliPresent: Bool) -> [AgentSession] {
         guard isAvailable else { return [] }
 
-        let storageBase = URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Cursor/User/workspaceStorage")
-        let workspaces = ProcessDetection.listProjectishFolders(in: storageBase, limit: 5)
+        let storageBase = URL(
+            fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Cursor/User/workspaceStorage"
+        )
+        let workspace = ProcessDetection.listProjectishFolders(in: storageBase, limit: 1).first
+            ?? AgentWorkspace(projectName: "Cursor")
 
-        if workspaces.isEmpty {
-            return [
-                AgentSession(
-                    agent: .cursor,
-                    sessionName: "Cursor",
-                    status: running ? .idle : .disconnected,
-                    workspace: AgentWorkspace(projectName: "Cursor"),
-                    currentTask: availabilityMessage,
-                    focusTarget: AgentFocusTarget(
-                        applicationBundleID: KnownAgentApps.cursorBundleIDs.first,
-                        applicationName: "Cursor",
-                        workspacePath: nil,
-                        terminalPreferred: false
-                    )
-                )
-            ]
+        let task: String
+        let status: AgentStatus
+        if cliProcessRunning {
+            status = .working
+            task = availabilityMessage ?? "cursor-agent running"
+        } else if appRunning {
+            status = .idle
+            task = "Ready"
+        } else {
+            status = .idle
+            task = workspace.path == nil
+                ? (availabilityMessage ?? "Ready")
+                : "Ready — recent workspace available"
         }
 
-        return workspaces.prefix(3).enumerated().map { index, ws in
+        let focus = AgentFocusTarget(
+            applicationBundleID: cliProcessRunning && !appRunning
+                ? KnownAgentApps.terminalBundleIDs.first
+                : KnownAgentApps.cursorBundleIDs.first,
+            applicationName: cliProcessRunning && !appRunning ? "Terminal" : "Cursor",
+            workspacePath: workspace.path,
+            terminalPreferred: cliProcessRunning && !appRunning
+        )
+
+        return [
             AgentSession(
                 agent: .cursor,
-                sessionName: ws.projectName,
-                status: running ? .idle : .disconnected,
-                workspace: ws,
-                currentTask: running
-                    ? "Open in Cursor (live agent status unavailable)"
-                    : "Cursor not running",
-                focusTarget: AgentFocusTarget(
-                    applicationBundleID: KnownAgentApps.cursorBundleIDs.first,
-                    applicationName: "Cursor",
-                    workspacePath: ws.path,
-                    terminalPreferred: false
-                )
+                sessionName: "Cursor",
+                status: status,
+                workspace: workspace,
+                currentTask: task,
+                focusTarget: focus
             )
-        }
+        ]
     }
 }
 
@@ -70,8 +74,9 @@ final class ClaudeCodeAdapter: DetectingAgentAdapter {
         let home = NSHomeDirectory()
         super.init(
             kind: .claudeCode,
-            bundleIDs: [],
             cliNames: ["claude"],
+            processNames: ["claude"],
+            commandLineNeedles: KnownAgentApps.claudeCommandNeedles,
             supportPaths: [
                 home + "/.claude",
                 home + "/.config/claude"
@@ -91,25 +96,6 @@ final class ClaudeCodeAdapter: DetectingAgentAdapter {
             )
         )
     }
-
-    override func buildSessions(running: Bool, cliPresent: Bool) -> [AgentSession] {
-        guard isAvailable else { return [] }
-        return [
-            AgentSession(
-                agent: .claudeCode,
-                sessionName: "CLI",
-                status: cliPresent ? .idle : .disconnected,
-                workspace: AgentWorkspace(projectName: "Claude Code"),
-                currentTask: "No live session bridge — use Open Terminal",
-                focusTarget: AgentFocusTarget(
-                    applicationBundleID: KnownAgentApps.terminalBundleIDs.first,
-                    applicationName: "Terminal",
-                    workspacePath: nil,
-                    terminalPreferred: true
-                )
-            )
-        ]
-    }
 }
 
 @MainActor
@@ -118,6 +104,8 @@ final class CodexAdapter: DetectingAgentAdapter {
         super.init(
             kind: .codex,
             cliNames: ["codex"],
+            processNames: ["codex"],
+            commandLineNeedles: KnownAgentApps.codexCommandNeedles,
             supportPaths: [NSHomeDirectory() + "/.codex"],
             appDisplayName: "Codex"
         )
@@ -130,6 +118,8 @@ final class GeminiCLIAdapter: DetectingAgentAdapter {
         super.init(
             kind: .geminiCLI,
             cliNames: ["gemini"],
+            processNames: ["gemini"],
+            commandLineNeedles: KnownAgentApps.geminiCommandNeedles,
             supportPaths: [NSHomeDirectory() + "/.gemini"],
             appDisplayName: "Gemini CLI"
         )
@@ -142,6 +132,8 @@ final class OpenCodeAdapter: DetectingAgentAdapter {
         super.init(
             kind: .openCode,
             cliNames: ["opencode"],
+            processNames: ["opencode"],
+            commandLineNeedles: KnownAgentApps.openCodeCommandNeedles,
             supportPaths: [
                 NSHomeDirectory() + "/.opencode",
                 NSHomeDirectory() + "/.config/opencode"
@@ -157,6 +149,8 @@ final class QwenAdapter: DetectingAgentAdapter {
         super.init(
             kind: .qwen,
             cliNames: ["qwen"],
+            processNames: ["qwen"],
+            commandLineNeedles: KnownAgentApps.qwenCommandNeedles,
             supportPaths: [NSHomeDirectory() + "/.qwen"],
             appDisplayName: "Qwen"
         )
@@ -169,7 +163,12 @@ final class KimiAdapter: DetectingAgentAdapter {
         super.init(
             kind: .kimi,
             cliNames: ["kimi"],
-            supportPaths: [NSHomeDirectory() + "/.kimi"],
+            processNames: ["kimi"],
+            commandLineNeedles: KnownAgentApps.kimiCommandNeedles,
+            supportPaths: [
+                NSHomeDirectory() + "/.kimi",
+                NSHomeDirectory() + "/.kimi-code"
+            ],
             appDisplayName: "Kimi"
         )
     }
@@ -180,31 +179,26 @@ final class CopilotCLIAdapter: DetectingAgentAdapter {
     init() {
         super.init(
             kind: .copilotCLI,
-            cliNames: ["gh", "copilot"],
+            cliNames: ["gh"],
+            commandLineNeedles: ["gh copilot", "gh-copilot"],
             supportPaths: [],
             appDisplayName: "GitHub Copilot CLI"
         )
     }
 
-    override func buildSessions(running: Bool, cliPresent: Bool) -> [AgentSession] {
-        // Only report available if `gh` exists; do not claim Copilot without evidence.
+    override func buildSessions(appRunning: Bool, cliProcessRunning: Bool, cliPresent: Bool) -> [AgentSession] {
         let hasGH = ProcessDetection.which("gh") != nil
-        updateAvailability(
-            hasGH,
-            message: hasGH
-                ? "GitHub CLI found — Copilot session bridge not available"
-                : "GitHub CLI not detected"
-        )
-        guard hasGH else { return [] }
+        updateAvailability(hasGH || cliProcessRunning, message: availabilityMessage)
+        guard hasGH || cliProcessRunning else { return [] }
         return [
             AgentSession(
                 agent: .copilotCLI,
                 sessionName: "Copilot",
-                status: .disconnected,
+                status: cliProcessRunning ? .working : .idle,
                 workspace: AgentWorkspace(projectName: "GitHub Copilot"),
                 currentTask: availabilityMessage,
                 focusTarget: AgentFocusTarget(
-                    applicationBundleID: nil,
+                    applicationBundleID: KnownAgentApps.terminalBundleIDs.first,
                     applicationName: "Terminal",
                     workspacePath: nil,
                     terminalPreferred: true
@@ -214,7 +208,6 @@ final class CopilotCLIAdapter: DetectingAgentAdapter {
     }
 }
 
-/// Architecture placeholder for SSH / remote agent sessions.
 @MainActor
 final class RemoteAgentAdapter: DetectingAgentAdapter {
     init() {
@@ -222,28 +215,28 @@ final class RemoteAgentAdapter: DetectingAgentAdapter {
         caps.supportsRemoteSession = true
         super.init(
             kind: .remote,
-            bundleIDs: [],
             cliNames: ["ssh"],
+            processNames: ["ssh"],
+            commandLineNeedles: [" ssh ", "/usr/bin/ssh"],
             supportPaths: [],
             appDisplayName: "Remote SSH",
             baseCapabilities: caps
         )
     }
 
-    override func buildSessions(running: Bool, cliPresent: Bool) -> [AgentSession] {
-        // Honest stub: architecture only until remote monitoring is implemented.
-        guard ProcessDetection.which("ssh") != nil else {
+    override func buildSessions(appRunning: Bool, cliProcessRunning: Bool, cliPresent: Bool) -> [AgentSession] {
+        guard ProcessDetection.which("ssh") != nil || cliProcessRunning else {
             updateAvailability(false, message: "ssh not found")
             return []
         }
-        updateAvailability(true, message: "Remote monitoring not implemented yet")
+        updateAvailability(true, message: availabilityMessage)
         return [
             AgentSession(
                 agent: .remote,
                 sessionName: "SSH",
-                status: .disconnected,
+                status: cliProcessRunning ? .working : .idle,
                 workspace: AgentWorkspace(projectName: "Remote", remoteHost: nil),
-                currentTask: "RemoteAgentAdapter ready — no active tunnels monitored",
+                currentTask: availabilityMessage,
                 focusTarget: AgentFocusTarget(terminalPreferred: true)
             )
         ]

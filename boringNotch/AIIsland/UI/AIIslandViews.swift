@@ -13,18 +13,26 @@ struct AIIslandView: View {
     @State private var planFeedback: String = ""
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            sessionList
-                .frame(maxWidth: .infinity)
+        Group {
             if let session = manager.selectedSession {
                 AgentDetailPane(session: session, planFeedback: $planFeedback)
-                    .frame(width: 260)
-                    .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .trailing).combined(with: .opacity)
+                    ))
+            } else {
+                sessionList
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .leading).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
             }
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 14)
-        .padding(.top, 4)
+        .padding(.bottom, 10)
+        .padding(.top, 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .animation(.smooth(duration: 0.22), value: manager.selectedSessionID)
         .onAppear {
             manager.startIfNeeded()
         }
@@ -154,7 +162,7 @@ struct AgentRowView: View {
                         Spacer()
                         Text(session.status.label)
                             .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundStyle(session.needsAttention ? Color.orange : Color.secondary)
+                            .foregroundStyle(agentStatusColor(session.status))
                     }
                     Text(session.sessionName)
                         .font(.system(size: 11, design: .rounded))
@@ -177,19 +185,17 @@ struct AgentRowView: View {
 
     private var statusDot: some View {
         Circle()
-            .fill(color(for: session.status))
+            .fill(agentStatusColor(session.status))
             .frame(width: 8, height: 8)
     }
+}
 
-    private func color(for status: AgentStatus) -> Color {
-        switch status {
-        case .working, .starting: return .green
-        case .permissionRequired, .question, .failed: return .red
-        case .planReview, .waiting: return .orange
-        case .completed: return .blue
-        case .idle: return .gray
-        case .disconnected: return .gray.opacity(0.5)
-        }
+private func agentStatusColor(_ status: AgentStatus) -> Color {
+    switch status.signalColorName {
+    case .green: return .green
+    case .orange: return .orange
+    case .red: return .red
+    case .neutral: return .secondary
     }
 }
 
@@ -203,77 +209,77 @@ struct AgentDetailPane: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: session.agent.systemImage)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(session.agent.displayName)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    Text(session.sessionName)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Button {
+                        withAnimation(.smooth(duration: 0.22)) {
+                            manager.selectSession(nil)
+                        }
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+
+                    Image(systemName: session.agent.systemImage)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(session.agent.displayName)
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        Text(session.sessionName)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer()
-                Button {
-                    manager.selectSession(nil)
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .bold))
+
+                Label(session.status.label, systemImage: "circle.fill")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(agentStatusColor(session.status))
+
+                if let task = session.currentTask {
+                    Text(task)
+                        .font(.system(size: 12, design: .rounded))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-            }
 
-            Label(session.status.label, systemImage: "circle.fill")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
+                if let request = session.permissionRequest {
+                    permissionBlock(request)
+                }
+                if let question = session.question {
+                    questionBlock(question)
+                }
+                if let plan = session.plan {
+                    planBlock(plan)
+                }
 
-            if let task = session.currentTask {
-                Text(task)
-                    .font(.system(size: 12, design: .rounded))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let request = session.permissionRequest {
-                permissionBlock(request)
-            }
-            if let question = session.question {
-                questionBlock(question)
-            }
-            if let plan = session.plan {
-                planBlock(plan)
-            }
-
-            if !session.files.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Files")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                    ForEach(session.files.prefix(5), id: \.self) { file in
-                        Text(file)
-                            .font(.system(size: 11, design: .monospaced))
+                if !session.files.isEmpty {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Files")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        ForEach(session.files.prefix(5), id: \.self) { file in
+                            Text(file)
+                                .font(.system(size: 11, design: .monospaced))
+                        }
                     }
                 }
-            }
 
-            if let usage = session.usage {
-                usageBlock(usage)
-            }
+                if let usage = session.usage {
+                    usageBlock(usage)
+                }
 
-            if let error = session.lastError {
-                Text(error)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.red.opacity(0.9))
-            }
+                if let error = session.lastError {
+                    Text(error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.red.opacity(0.9))
+                }
 
-            actionRow
-            Spacer(minLength: 0)
+                actionRow
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.black.opacity(0.35))
-        )
     }
 
     private func permissionBlock(_ request: AgentPermissionRequest) -> some View {
@@ -298,7 +304,7 @@ struct AgentDetailPane: View {
                 .tint(.green)
             }
             if !caps.supportsPermission {
-                Text("Response cannot be sent to this agent — Allow/Deny updates local state only if Demo; otherwise Open Agent.")
+                Text("Local demo only — live agents open externally.")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
