@@ -1393,7 +1393,7 @@ struct Appearance: View {
                         .tag(MirrorShapeEnum.rectangle)
                 }
                 Defaults.Toggle(key: .showNotHumanFace) {
-                    Text("Show cool face animation while inactive")
+                    Text("Show Diamante mark while inactive")
                 }
             } header: {
                 HStack {

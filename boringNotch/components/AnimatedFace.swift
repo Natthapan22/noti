@@ -1,82 +1,47 @@
 //
 //  AnimatedFace.swift
 //
-// Created by Harsh Vardhan  Goswami  on  04/08/24.
+//  Closed-notch brand mark (replaces the old smile face).
 //
 
 import SwiftUI
 
+/// Diamante mark shown in the closed notch when idle.
+struct DiamanteBrandMark: View {
+    var height: CGFloat = 20
+    var compact: Bool = true
+
+    var body: some View {
+        HStack(spacing: compact ? 4 : 8) {
+            Image(systemName: "diamond.fill")
+                .font(.system(size: compact ? 9 : 22, weight: .semibold))
+                .symbolRenderingMode(.hierarchical)
+
+            Text("Diamante")
+                .font(.system(size: compact ? 10 : 16, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+        }
+        .foregroundStyle(.white)
+        .frame(height: height)
+        .accessibilityLabel("Diamante")
+    }
+}
+
+/// Kept for EmptyState and any call sites that still expect the old face API.
 struct MinimalFaceFeatures: View {
-    @State private var isBlinking = false
-    @State var height:CGFloat = 20;
-    @State var width:CGFloat = 30;
-    
+    @State var height: CGFloat = 20
+    @State var width: CGFloat = 30
+
     var body: some View {
-        VStack(spacing: 4) { // Adjusted spacing to fit within 30x30
-            // Eyes
-            HStack(spacing: 4) { // Adjusted spacing to fit within 30x30
-                Eye(isBlinking: $isBlinking)
-                Eye(isBlinking: $isBlinking)
-            }
-            
-            // Nose and mouth combined
-            VStack(spacing: 2) { // Adjusted spacing to fit within 30x30
-                // Nose
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white)
-                    .frame(width: 3, height: 4)
-                
-                // Mouth (happy)
-                GeometryReader { geometry in
-                    Path { path in
-                        let width = geometry.size.width
-                        let height = geometry.size.height
-                        path.move(to: CGPoint(x: 0, y: height / 2))
-                        path.addQuadCurve(to: CGPoint(x: width, y: height / 2), control: CGPoint(x: width / 2, y: height))
-                    }
-                    .stroke(Color.white, lineWidth: 2)
-                }
-                .frame(width: 14, height: 10)
-            }
-        }
-        .frame(width: self.width, height: self.height) // Maximum size of face
-        .onAppear {
-            startBlinking()
-        }
-    }
-    
-    func startBlinking() {
-        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
-            withAnimation(.spring(duration: 0.2)) {
-                isBlinking = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.spring(duration: 0.2)) {
-                    isBlinking = false
-                }
-            }
-        }
+        DiamanteBrandMark(height: height, compact: width < 50)
+            .frame(width: max(width, 72), height: height)
     }
 }
 
-struct Eye: View {
-    @Binding var isBlinking: Bool
-    
-    var body: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(Color.white)
-            .frame(width: 4, height: isBlinking ? 1 : 4)
-            .frame(maxWidth: 15, maxHeight: 15) // Adjusted max size
-            .animation(.easeInOut(duration: 0.1), value: isBlinking)
+#Preview {
+    ZStack {
+        Color.black
+        DiamanteBrandMark()
     }
-}
-
-struct MinimalFaceFeatures_Previews: PreviewProvider {
-    static var previews: some View {
-        ZStack {
-            Color.black
-            MinimalFaceFeatures()
-        }
-        .previewLayout(.fixed(width: 60, height: 60)) // Adjusted preview size for better visibility
-    }
+    .frame(width: 120, height: 40)
 }

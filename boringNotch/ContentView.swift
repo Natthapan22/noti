@@ -75,7 +75,8 @@ struct ContentView: View {
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
         {
-            chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
+            // Left spacer (matches music art slot) + room for diamond + "Diamante"
+            chinWidth += max(0, vm.effectiveClosedNotchHeight - 12) + 78
         }
 
         return chinWidth
@@ -394,7 +395,7 @@ struct ContentView: View {
     @ViewBuilder
     func BoringFaceAnimation() -> some View {
         HStack {
-            HStack {
+            HStack(spacing: 0) {
                 Rectangle()
                     .fill(.clear)
                     .frame(
@@ -403,8 +404,9 @@ struct ContentView: View {
                     )
                 Rectangle()
                     .fill(.black)
-                    .frame(width: vm.closedNotchSize.width - 20)
-                MinimalFaceFeatures()
+                    .frame(width: max(0, vm.closedNotchSize.width - 20))
+                DiamanteBrandMark(height: max(14, vm.effectiveClosedNotchHeight - 10))
+                    .padding(.trailing, 2)
             }
         }.frame(
             height: vm.effectiveClosedNotchHeight,

@@ -12,12 +12,11 @@ struct EmptyStateView: View {
     
     var body: some View {
         HStack {
-            MinimalFaceFeatures(
-                height: 70, width: 80)
+            DiamanteBrandMark(height: 28, compact: false)
             Text(message)
                 .font(.system(size:14))
                 .foregroundColor(.gray)
-        }.transition(.blurReplace.animation(.spring(.bouncy(duration: 0.3)))) // Smooth animation
+        }.transition(.blurReplace.animation(.spring(.bouncy(duration: 0.3))))
     }
 }
 
