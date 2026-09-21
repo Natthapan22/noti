@@ -8,7 +8,6 @@ import SwiftUI
 
 struct AIIslandSettings: View {
     @Default(.aiIslandEnabled) private var enabled
-    @Default(.aiIslandDemoMode) private var demoMode
     @Default(.aiIslandNotifications) private var notifications
     @Default(.aiIslandShowCollapsedChip) private var showChip
     @Default(.aiIslandEnabledAgents) private var enabledAgents
@@ -26,32 +25,12 @@ struct AIIslandSettings: View {
             } footer: {
                 Text("AI Island adds a native multi-agent dashboard inside the notch. Existing Boring Notch features stay unchanged.")
             }
-
-            Section {
-                Defaults.Toggle("Demo Mode (Mock Agent)", key: .aiIslandDemoMode)
-                if demoMode {
-                    HStack {
-                        Button("Mixed") { manager.loadMockScenario(.mixed) }
-                        Button("Permission") { manager.loadMockScenario(.permission) }
-                        Button("Question") { manager.loadMockScenario(.question) }
-                        Button("Plan") { manager.loadMockScenario(.plan) }
-                        Button("Failed") { manager.loadMockScenario(.failed) }
-                    }
-                }
-            } header: {
-                Text("Demo")
-            } footer: {
-                Text("Demo Mode is for UI testing only. It does not claim live agent integration.")
-            }
-            .onChange(of: demoMode) { _, _ in
-                NotificationCenter.default.post(name: .aiIslandDemoModeChanged, object: nil)
-            }
             .onChange(of: enabled) { _, _ in
-                NotificationCenter.default.post(name: .aiIslandDemoModeChanged, object: nil)
+                NotificationCenter.default.post(name: .aiIslandSettingsChanged, object: nil)
             }
 
             Section {
-                ForEach(AgentKind.allCases.filter { $0 != .mock }) { kind in
+                ForEach(AgentKind.allCases) { kind in
                     Toggle(isOn: binding(for: kind)) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(kind.displayName)
@@ -67,7 +46,7 @@ struct AIIslandSettings: View {
                 Text("Adapters detect local apps/CLIs only. Permission/plan bridges appear when an agent exposes a supported local channel — otherwise Open/Focus is used.")
             }
             .onChange(of: enabledAgents) { _, _ in
-                NotificationCenter.default.post(name: .aiIslandDemoModeChanged, object: nil)
+                NotificationCenter.default.post(name: .aiIslandSettingsChanged, object: nil)
             }
 
             Section {

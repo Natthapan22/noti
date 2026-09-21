@@ -93,7 +93,7 @@ struct AIIslandView: View {
             Spacer(minLength: 0)
             Menu {
                 Button("All Agents") { manager.agentFilter = nil }
-                ForEach(AgentKind.allCases.filter { $0 != .mock }) { kind in
+                ForEach(AgentKind.allCases) { kind in
                     Button(kind.displayName) { manager.agentFilter = kind }
                 }
             } label: {
@@ -123,7 +123,7 @@ struct AIIslandView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("No agent sessions")
                 .font(.system(.callout, design: .rounded).weight(.medium))
-            Text("Enable agents in Settings → AI Island, or turn on Demo Mode.")
+            Text("Enable agents in Settings → AI Island.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -304,7 +304,7 @@ struct AgentDetailPane: View {
                 .tint(.green)
             }
             if !caps.supportsPermission {
-                Text("Local demo only — live agents open externally.")
+                Text("Open Agent externally — this adapter has no live permission channel.")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }

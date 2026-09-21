@@ -13,15 +13,14 @@
 3. Build & Run
 4. Hover the notch → tab **AI**
 5. Settings → **AI Island**
-   - Enable Demo Mode to exercise permission/question/plan UI
-   - Enable/disable individual agents
+   - Confirm Cursor/Claude detection matches your machine
 
 ## Project layout
 
 ```text
 boringNotch/AIIsland/
   Domain/          AgentSession, status, attention, capabilities
-  Adapter/         protocol, detection, concrete adapters, mock
+  Adapter/         protocol, detection, concrete adapters
   Manager/         AgentManager facade
   Focus/           AppFocusService
   UI/              AIIslandView, settings
@@ -55,7 +54,7 @@ Before claiming a live bridge for an agent:
 
 | Symptom | Fix |
 |---------|-----|
-| Empty AI tab | Enable agents or Demo Mode in Settings |
+| Empty AI tab | Enable agents in Settings → AI Island |
 | No sneak peek | Check `aiIslandNotifications` |
 | Tabs missing | `aiIslandEnabled` or Shelf flags |
 | Build fails with CLI tools only | Install Xcode and `xcode-select -s /Applications/Xcode.app` |

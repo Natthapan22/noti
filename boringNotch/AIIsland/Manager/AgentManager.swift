@@ -13,7 +13,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let aiIslandAttentionChanged = Notification.Name("aiIslandAttentionChanged")
-    static let aiIslandDemoModeChanged = Notification.Name("aiIslandDemoModeChanged")
+    static let aiIslandSettingsChanged = Notification.Name("aiIslandSettingsChanged")
 }
 
 @MainActor
@@ -44,7 +44,7 @@ final class AgentManager: ObservableObject {
 
     private init() {
         registerDefaultAdapters()
-        NotificationCenter.default.publisher(for: .aiIslandDemoModeChanged)
+        NotificationCenter.default.publisher(for: .aiIslandSettingsChanged)
             .sink { [weak self] _ in
                 Task { @MainActor in
                     await self?.rebuildAdaptersForSettings()
@@ -198,11 +198,6 @@ final class AgentManager: ObservableObject {
         return AppFocusService.shared.openFolder(path)
     }
 
-    func loadMockScenario(_ scenario: MockScenario) {
-        guard let mock = adapters[.mock] as? MockAgentAdapter else { return }
-        mock.loadScenario(scenario)
-    }
-
     // MARK: - Private
 
     private func registerDefaultAdapters() {
@@ -215,8 +210,7 @@ final class AgentManager: ObservableObject {
             QwenAdapter(),
             KimiAdapter(),
             CopilotCLIAdapter(),
-            RemoteAgentAdapter(),
-            MockAgentAdapter()
+            RemoteAgentAdapter()
         ]
         for adapter in list {
             adapters[adapter.kind] = adapter
@@ -234,14 +228,9 @@ final class AgentManager: ObservableObject {
     private func startAll() async {
         adapterCancellables.removeAll()
         let enabled = Set(Defaults[.aiIslandEnabledAgents])
-        let demo = Defaults[.aiIslandDemoMode]
 
         for (kind, adapter) in adapters {
-            let shouldRun: Bool = {
-                if kind == .mock { return demo }
-                return enabled.contains(kind.rawValue)
-            }()
-            guard shouldRun else {
+            guard enabled.contains(kind.rawValue) else {
                 sessionsByAgent[kind] = []
                 continue
             }
@@ -262,14 +251,9 @@ final class AgentManager: ObservableObject {
 
     private func publishMerged() {
         let enabled = Set(Defaults[.aiIslandEnabledAgents])
-        let demo = Defaults[.aiIslandDemoMode]
         var merged: [AgentSession] = []
-        for (kind, list) in sessionsByAgent {
-            if kind == .mock {
-                if demo { merged.append(contentsOf: list) }
-            } else if enabled.contains(kind.rawValue) {
-                merged.append(contentsOf: list)
-            }
+        for (kind, list) in sessionsByAgent where enabled.contains(kind.rawValue) {
+            merged.append(contentsOf: list)
         }
         sessions = AgentAttention.sortedForDisplay(merged)
         let previousAttention = attention.attentionCount

@@ -42,7 +42,6 @@ UI disables or falls back (`Open Agent`) when a capability is false.
 | `KimiAdapter` | `kimi` | Detection only |
 | `CopilotCLIAdapter` | `gh` present | Detection only |
 | `RemoteAgentAdapter` | `ssh` present | Architecture stub |
-| `MockAgentAdapter` | Always | Full demo permission/question/plan |
 
 ## Adding a new agent
 

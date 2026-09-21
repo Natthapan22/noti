@@ -20,7 +20,6 @@ enum AgentKind: String, CaseIterable, Identifiable, Codable, Defaults.Serializab
     case kimi
     case copilotCLI
     case remote
-    case mock
 
     var id: String { rawValue }
 
@@ -35,7 +34,6 @@ enum AgentKind: String, CaseIterable, Identifiable, Codable, Defaults.Serializab
         case .kimi: return "Kimi"
         case .copilotCLI: return "Copilot CLI"
         case .remote: return "Remote"
-        case .mock: return "Demo Agent"
         }
     }
 
@@ -50,7 +48,6 @@ enum AgentKind: String, CaseIterable, Identifiable, Codable, Defaults.Serializab
         case .kimi: return "moon.stars"
         case .copilotCLI: return "person.crop.circle.badge.checkmark"
         case .remote: return "network"
-        case .mock: return "flask"
         }
     }
 }
@@ -145,18 +142,6 @@ struct AgentCapabilities: Codable, Hashable, Equatable {
     var supportsOpenApp: Bool = true
 
     static let openOnly = AgentCapabilities()
-    static let demo = AgentCapabilities(
-        supportsPermission: true,
-        supportsQuestions: true,
-        supportsPlanReview: true,
-        supportsUsage: true,
-        supportsSessionControl: true,
-        supportsTerminalFocus: true,
-        supportsRemoteSession: false,
-        supportsStop: true,
-        supportsRestart: true,
-        supportsOpenApp: true
-    )
 }
 
 // MARK: - Permission / Question / Plan

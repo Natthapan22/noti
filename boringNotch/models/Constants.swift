@@ -164,7 +164,6 @@ extension Defaults.Keys {
     
     // MARK: AI Island
     static let aiIslandEnabled = Key<Bool>("aiIslandEnabled", default: true)
-    static let aiIslandDemoMode = Key<Bool>("aiIslandDemoMode", default: false)
     static let aiIslandNotifications = Key<Bool>("aiIslandNotifications", default: true)
     static let aiIslandHideIdleAgents = Key<Bool>("aiIslandHideIdleAgents", default: false)
     static let aiIslandEnabledAgents = Key<[String]>(
