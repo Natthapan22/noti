@@ -30,7 +30,7 @@ struct DiamanteDiamondMark: View {
         Image(systemName: "diamond.fill")
             .font(.system(size: compact ? 10 : 22, weight: .semibold))
             .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(.white)
+            .foregroundStyle(Color(red: 1.0, green: 0.45, blue: 0.75))
             .frame(width: compact ? 18 : 28, height: height)
             .accessibilityHidden(true)
     }
