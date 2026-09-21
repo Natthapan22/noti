@@ -47,6 +47,10 @@ struct InlineHUD: View {
                                 .symbolVariant(value > 0 ? .none : .slash)
                                 .contentTransition(.interpolate)
                                 .frame(width: 20, height: 15, alignment: .center)
+                        case .agent:
+                            Image(systemName: icon.isEmpty ? "sparkles" : icon)
+                                .contentTransition(.interpolate)
+                                .frame(width: 20, height: 15, alignment: .center)
                         default:
                             EmptyView()
                     }
@@ -76,6 +80,11 @@ struct InlineHUD: View {
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .contentTransition(.interpolate)
+                } else if type == .agent {
+                    Text(Int(value) == 1 ? "1 attention" : "\(Int(value)) attention")
+                        .foregroundStyle(.orange)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 } else {
                         HStack {
                         DraggableProgressBar(value: $value, onChange: { v in
@@ -147,6 +156,8 @@ struct InlineHUD: View {
                 return "Backlight"
             case .mic:
                 return "Mic"
+            case .agent:
+                return "AI"
             default:
                 return ""
         }

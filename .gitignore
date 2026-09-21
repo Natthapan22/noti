@@ -53,3 +53,10 @@ build/
 *.xcarchive
 *.dSYM
 
+
+# planning-with-files session markers
+.planning/.active_plan
+.planning/**/.attestation
+.planning/**/.mode
+.planning/**/.nonce
+.planning/**/.stop_blocks

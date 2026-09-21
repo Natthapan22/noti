@@ -23,6 +23,7 @@ struct ContentView: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
+    @ObservedObject var agentManager = AgentManager.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -287,6 +288,9 @@ struct ContentView: View {
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
+                      } else if vm.notchState == .closed && Defaults[.aiIslandEnabled] && Defaults[.aiIslandShowCollapsedChip] && agentManager.attention.attentionCount > 0 && !vm.hideOnClosed {
+                          AIIslandCollapsedChip()
+                              .frame(height: vm.effectiveClosedNotchHeight)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           MusicLiveActivity()
                               .frame(alignment: .center)
@@ -301,7 +305,17 @@ struct ContentView: View {
                        }
 
                       if coordinator.sneakPeek.show {
-                          if (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && !Defaults[.inlineHUD] && vm.notchState == .closed {
+                          if coordinator.sneakPeek.type == .agent && vm.notchState == .closed && !Defaults[.inlineHUD] {
+                              HStack(spacing: 8) {
+                                  Image(systemName: "sparkles")
+                                  Text(Int(coordinator.sneakPeek.value) == 1
+                                        ? "1 attention"
+                                        : "\(Int(coordinator.sneakPeek.value)) attention")
+                                      .font(.system(size: 11, weight: .medium, design: .rounded))
+                              }
+                              .foregroundStyle(.orange)
+                              .padding(.bottom, 10)
+                          } else if (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && (coordinator.sneakPeek.type != .agent) && !Defaults[.inlineHUD] && vm.notchState == .closed {
                               SystemEventIndicatorModifier(
                                   eventType: $coordinator.sneakPeek.type,
                                   value: $coordinator.sneakPeek.value,
@@ -349,6 +363,8 @@ struct ContentView: View {
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
                     case .shelf:
                         ShelfView()
+                    case .aiIsland:
+                        AIIslandView()
                     }
                 }
                 .transition(

@@ -162,6 +162,26 @@ extension Defaults.Keys {
     // Option key modifier behaviour for media keys
     static let optionKeyAction = Key<OptionKeyAction>("optionKeyAction", default: OptionKeyAction.openSettings)
     
+    // MARK: AI Island
+    static let aiIslandEnabled = Key<Bool>("aiIslandEnabled", default: true)
+    static let aiIslandDemoMode = Key<Bool>("aiIslandDemoMode", default: false)
+    static let aiIslandNotifications = Key<Bool>("aiIslandNotifications", default: true)
+    static let aiIslandEnabledAgents = Key<[String]>(
+        "aiIslandEnabledAgents",
+        default: [
+            AgentKind.cursor.rawValue,
+            AgentKind.claudeCode.rawValue,
+            AgentKind.codex.rawValue,
+            AgentKind.geminiCLI.rawValue,
+            AgentKind.openCode.rawValue,
+            AgentKind.qwen.rawValue,
+            AgentKind.kimi.rawValue,
+            AgentKind.copilotCLI.rawValue,
+            AgentKind.remote.rawValue
+        ]
+    )
+    static let aiIslandShowCollapsedChip = Key<Bool>("aiIslandShowCollapsedChip", default: true)
+
     // MARK: Shelf
     static let boringShelf = Key<Bool>("boringShelf", default: true)
     static let openShelfByDefault = Key<Bool>("openShelfByDefault", default: true)
